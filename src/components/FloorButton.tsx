@@ -1,5 +1,3 @@
-import React from "react";
-
 const FloorButton = ({ floor, active }: { floor: number; active: boolean }) => {
   return (
     <div
