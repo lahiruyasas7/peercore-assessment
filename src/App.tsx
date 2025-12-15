@@ -5,45 +5,40 @@ import ArrowButtons from "./components/ArrowButtons";
 import FloorButton from "./components/FloorButton";
 import InsidePanel from "./components/InsidePanel";
 
-// queue optimization
+// Enhanced optimizeQueue function
 const optimizeQueue = (
   current: number,
   queue: number[],
   direction: Direction
 ): number[] => {
-  const sorted = [...new Set(queue)].sort((a, b) => a - b);
+  // Remove duplicates and sort initially
+  const uniqueFloors = [...new Set(queue)];
+
+  if (direction === "idle") {
+    // If idle, go to nearest floor first
+    return uniqueFloors.sort(
+      (a, b) => Math.abs(a - current) - Math.abs(b - current)
+    );
+  }
 
   if (direction === "up") {
-    return [
-      ...sorted.filter((f) => f > current),
-      ...sorted.filter((f) => f < current).reverse(),
-    ];
+    // First serve all floors above current in ascending order
+    const above = uniqueFloors.filter((f) => f > current).sort((a, b) => a - b);
+    // Then serve floors below current in descending order (direction change)
+    const below = uniqueFloors.filter((f) => f < current).sort((a, b) => b - a);
+    return [...above, ...below];
   }
 
   if (direction === "down") {
-    return [
-      ...sorted.filter((f) => f < current).reverse(),
-      ...sorted.filter((f) => f > current),
-    ];
+    // First serve all floors below current in descending order
+    const below = uniqueFloors.filter((f) => f < current).sort((a, b) => b - a);
+    // Then serve floors above current in ascending order (direction change)
+    const above = uniqueFloors.filter((f) => f > current).sort((a, b) => a - b);
+    return [...below, ...above];
   }
 
-  return sorted;
+  return uniqueFloors;
 };
-
-// ---- Inside elevator buttons (only active floor)
-// const InsidePanel = ({ onPress }: { onPress: (f: number) => void }) => (
-//   <div className="absolute right-[15px] top-1/2 -translate-y-1/2 flex flex-col gap-1">
-//     {FLOORS.map((f) => (
-//       <button
-//         key={f}
-//         onClick={() => onPress(f)}
-//         className="w-4 h-4 rounded-full bg-yellow-400 border border-yellow-600 hover:scale-110 transition flex items-center justify-center"
-//       >
-//         {f}
-//       </button>
-//     ))}
-//   </div>
-// );
 
 export default function App() {
   const [state, setState] = useState<ElevatorState>({
@@ -51,7 +46,7 @@ export default function App() {
     direction: "idle",
     queue: [],
   });
-  //console.log("queue", state.queue);
+
   const addToQueue = useCallback((floor: number) => {
     setState((prev) => {
       if (floor === prev.currentFloor || prev.queue.includes(floor))
